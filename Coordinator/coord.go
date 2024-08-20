@@ -3,17 +3,27 @@ package main
 import (
 	"fmt"
 	"log"
+	"os"
 	"time"
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
+	"github.com/joho/godotenv"
 )
 
-var broker = "tcp://localhost:1883"
+func init() {
+	// Load environment variables from .env file
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
+}
+
+var broker = os.Getenv("MQTT_SERVER")
 var clientId = "coordinator"
 
 func main() {
 	opts := mqtt.NewClientOptions().AddBroker(broker).SetClientID(clientId)
-	opts.SetCleanSession(false) // Guarantee persistance
+	opts.SetCleanSession(false) // Guarantee persistence
 	opts.SetDefaultPublishHandler(messageHandler)
 	client := mqtt.NewClient(opts)
 
@@ -26,7 +36,7 @@ func main() {
 	go handleWakeUps(client)
 	go dataFromUnits(client)
 
-	// TODO(samuel): Fix this workaround to maintin loop
+	// Keep the main routine running
 	select {}
 }
 
@@ -61,7 +71,7 @@ func dataCallback(client mqtt.Client, msg mqtt.Message) {
 	if !unitAwake {
 		wakeUpTopic := "/Control/WakeUp/"
 		client.Publish(wakeUpTopic, 1, false, "Wake-up instructions")
-		time.Sleep(2 * time.Second) // TODO(samuel): Implement actual wakeup signal
+		time.Sleep(2 * time.Second) // TODO: Implement actual wakeup signal
 	}
 	dataTopic := fmt.Sprintf("/Data/To/Unit/%s", msg.Payload())
 	client.Publish(dataTopic, 1, false, "Forwarding data")
@@ -76,7 +86,7 @@ func handleWakeUps(client mqtt.Client) {
 
 func wakeUpCallback(client mqtt.Client, msg mqtt.Message) {
 	fmt.Printf("Wake-up received: %s from topic: %s\n", msg.Payload(), msg.Topic())
-	time.Sleep(2 * time.Second) // TODO(samuel): Implement actual wakeup signal
+	time.Sleep(2 * time.Second) // TODO: Implement actual wakeup signal
 	fmt.Println("Unit awake")
 }
 
