@@ -82,3 +82,42 @@ As unidades de comunicação são dispositivos ESP32 que se conectam ao coordena
 4. **Manutenção da Conexão**:
    - A unidade verifica continuamente a conexão com o broker MQTT e se reconecta automaticamente em caso de desconexão.
    - Utiliza QoS 1 para garantir que as mensagens sejam entregues pelo menos uma vez, garantindo a confiabilidade do sistema.
+
+### Aos Colaboradores
+
+1. **Instale o `BlackBox`:**
+   - **macOS**:
+     ```bash
+     brew install blackbox
+     ```
+   - **Linux (Debian/Ubuntu)**:
+     ```bash
+     sudo apt-get install blackbox
+     ```
+   - **Windows**:
+     - No Windows, você pode usar o `WSL` (Windows Subsystem for Linux) para instalar o `BlackBox` da mesma forma que no Linux, ou configurar um ambiente de terminal Unix com ferramentas como Git Bash e seguir os passos de instalação para Linux.
+
+2. **Obtenha a Chave GPG Codificada:**
+   - A chave GPG codificada em base64 está armazenada nas "Secrets" do repositório.
+   - Peça ao responsável pelo projeto para compartilhar o valor da chave com você, se você ainda não tiver acesso.
+
+3. **Importe a Chave GPG na Sua Máquina:**
+   - Depois de obter o valor da chave, importe-a usando o seguinte comando:
+     ```bash
+     echo "base64_encoded_key" | base64 --decode | gpg --import
+     ```
+   - Substitua `"base64_encoded_key"` pela chave base64 que você recebeu.
+
+4. **Verifique a Importação:**
+   - Você pode verificar se a chave foi importada corretamente usando o comando:
+     ```bash
+     gpg --list-keys
+     ```
+   - A chave deve aparecer na lista de chaves disponíveis.
+
+5. **Desencripte os Arquivos com `BlackBox`:**
+   - Com a chave GPG importada, use o seguinte comando para desencriptar os arquivos:
+     ```bash
+     blackbox_decrypt_all_files
+     ```
+   - Isso desencriptará todos os arquivos protegidos no repositório, permitindo que você trabalhe com eles.
