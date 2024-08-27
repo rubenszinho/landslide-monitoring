@@ -1,1 +1,2 @@
+Communication Unit/src/config.h
 Coordinator/config.env
