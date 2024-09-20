@@ -1,9 +1,7 @@
 name: Store GPG Key in AWS Secrets Manager
 
 on:
-  push:
-    branches:
-      - main
+  workflow_dispatch:
 
 jobs:
   store-gpg-key:
