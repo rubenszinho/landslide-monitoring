@@ -1,91 +1,93 @@
-# Sistema de Comunicação para Monitoramento de Desastres
+# Communication System for Disaster Monitoring
 
-## Objetivo do Projeto
+## Project Objective
 
-Este projeto visa implementar um sistema de comunicação multiprotocolo para monitoramento de desastres, utilizando dispositivos ESP32 como unidades de comunicação e um coordenador central para gerenciar as comunicações. O sistema utiliza o protocolo MQTT para garantir uma comunicação confiável e eficiente entre as unidades e o coordenador.
+This project aims to implement a multi-protocol communication system for disaster monitoring, using ESP32 devices as communication units and a central coordinator to manage communications. The system uses the MQTT protocol to ensure reliable and efficient communication between the units and the coordinator.
 
 ---
 
-## Coordenador
+## Coordinator
 
-### Visão Geral
+### Overview
 
-O coordenador é responsável por gerenciar a comunicação entre as diferentes unidades de campo (ESP32) e processar os dados recebidos. Ele recebe instruções de controle, envia sinais de "wake-up" para as unidades conforme necessário e encaminha os dados processados para o sistema externo.
+The coordinator is responsible for managing the communication between the different field units (ESP32) and processing the received data. It receives control instructions, sends "wake-up" signals to the units as needed, and forwards the processed data to the external system.
 
-### Tópicos MQTT
+### MQTT Topics
 
 - **`/Control/Event/#`**: 
-  - **Descrição**: O coordenador se inscreve nesse tópico para monitorar eventos de controle que possam exigir ações específicas, como instruções para acordar unidades ou mudar o estado do sistema.
-  - **Racionalidade**: Este tópico permite que o coordenador responda a eventos globais que podem afetar o funcionamento do sistema como um todo.
+  - **Description**: The coordinator subscribes to this topic to monitor control events that may require specific actions, such as instructions to wake up units or change the system state.
+  - **Rationale**: This topic allows the coordinator to respond to global events that can affect the operation of the system as a whole.
 
 - **`/Data/Coordinator/#`**:
-  - **Descrição**: Tópico usado pelo coordenador para receber dados ou instruções específicas das unidades ou de outros sistemas de controle.
-  - **Racionalidade**: Centraliza o recebimento de dados e instruções para o coordenador, facilitando o processamento e a disseminação de informações para as unidades.
+  - **Description**: A topic used by the coordinator to receive data or specific instructions from the units or other control systems.
+  - **Rationale**: Centralizes the receipt of data and instructions for the coordinator, facilitating the processing and dissemination of information to the units.
 
 - **`/Control/WakeUp/#`**:
-  - **Descrição**: Tópico usado para enviar instruções de "wake-up" para as unidades que estão em estado de baixo consumo de energia.
-  - **Racionalidade**: Garante que as unidades possam ser ativadas conforme necessário para processar eventos ou coletar dados, mantendo a eficiência energética.
+  - **Description**: Topic used to send "wake-up" instructions to units in a low-power state.
+  - **Rationale**: Ensures that units can be activated as needed to process events or collect data, while maintaining energy efficiency.
 
 - **`/Data/From/#`**:
-  - **Descrição**: O coordenador se inscreve nesse tópico para receber dados enviados pelas unidades de campo.
-  - **Racionalidade**: Permite que o coordenador agregue e processe os dados recebidos das unidades, encaminhando-os conforme necessário.
+  - **Description**: The coordinator subscribes to this topic to receive data sent by the field units.
+  - **Rationale**: Allows the coordinator to aggregate and process the received data from the units and forward it as needed.
 
 - **`/Data/To/Unit/{ID}`**:
-  - **Descrição**: Tópico usado para enviar dados específicos para uma unidade identificada por seu ID.
-  - **Racionalidade**: Facilita o envio de dados ou instruções direcionadas para unidades específicas, permitindo um controle granular das operações.
+  - **Description**: Topic used to send specific data to a unit identified by its ID.
+  - **Rationale**: Facilitates sending data or instructions to specific units, allowing granular control of operations.
 
-### Funcionamento do Coordenador
+### Coordinator Operation
 
-1. **Monitoramento de Eventos**:
-   - O coordenador se inscreve em `/Control/Event/#` para monitorar eventos de controle.
-   - Ao receber um evento, ele publica instruções correspondentes em `/Data/Coordinator/`.
+1. **Event Monitoring**:
+   - The coordinator subscribes to `/Control/Event/#` to monitor control events.
+   - Upon receiving an event, it publishes corresponding instructions to `/Data/Coordinator/`.
 
-2. **Recebimento e Processamento de Dados**:
-   - O coordenador recebe dados em `/Data/Coordinator/#`.
-   - Verifica se as unidades estão acordadas; se necessário, envia instruções de "wake-up" em `/Control/WakeUp/#`.
-   - Encaminha os dados para as unidades apropriadas em `/Data/To/Unit/{ID}`.
+2. **Receiving and Processing Data**:
+   - The coordinator receives data on `/Data/Coordinator/#`.
+   - It checks if the units are awake and, if necessary, sends wake-up instructions via `/Control/WakeUp/#`.
+   - It forwards the data to the appropriate units via `/Data/To/Unit/{ID}`.
 
-3. **Wake-Up de Unidades**:
-   - O coordenador monitora `/Control/WakeUp/#` para enviar sinais de ativação para as unidades.
-   - As unidades, ao acordarem, podem enviar dados de volta através de `/Data/From/#`.
+3. **Unit Wake-Up**:
+   - The coordinator monitors `/Control/WakeUp/#` to send activation signals to the units.
+   - Upon waking, the units may send data back through `/Data/From/#`.
 
 ---
 
-## Unidade de Comunicação (ESP32)
+## Communication Unit (ESP32)
 
-### Visão Geral
+### Overview
 
-As unidades de comunicação são dispositivos ESP32 que se conectam ao coordenador via MQTT para receber instruções, coletar dados e transmiti-los ao coordenador ou a sistemas externos. Elas são capazes de entrar em estado de baixo consumo de energia e acordar sob demanda, conforme instruções do coordenador.
+The communication units are ESP32 devices that connect to the coordinator via MQTT to receive instructions, collect data, and transmit it to the coordinator or external systems. They can enter a low-power state and wake up on demand as instructed by the coordinator.
 
-### Tópicos MQTT
+### MQTT Topics
 
 - **`/Data/To/Unit/{ID}`**:
-  - **Descrição**: Tópico onde a unidade se inscreve para receber dados ou instruções específicas do coordenador.
-  - **Racionalidade**: Permite que a unidade receba dados ou comandos diretamente do coordenador, facilitando a execução de tarefas específicas.
+  - **Description**: Topic where the unit subscribes to receive data or specific instructions from the coordinator.
+  - **Rationale**: Allows the unit to receive data or commands directly from the coordinator, facilitating the execution of specific tasks.
 
 - **`/Data/From/Unit/{ID}`**:
-  - **Descrição**: Tópico onde a unidade publica dados processados para serem enviados de volta ao coordenador.
-  - **Racionalidade**: Facilita o envio de dados coletados ou processados pela unidade, garantindo que o coordenador possa receber e processar essas informações.
+  - **Description**: Topic where the unit publishes processed data to be sent back to the coordinator.
+  - **Rationale**: Facilitates the transmission of collected or processed data by the unit, ensuring that the coordinator can receive and process this information.
 
-### Funcionamento da Unidade de Comunicação
+### Communication Unit Operation
 
-1. **Conexão e Subscrição**:
-   - A unidade se conecta ao broker MQTT e se inscreve no tópico `/Data/To/Unit/{ID}` para receber dados e instruções.
-   - Mantém uma sessão persistente e utiliza QoS 1 para garantir a entrega dos dados.
+1. **Connection and Subscription**:
+   - The unit connects to the MQTT broker and subscribes to the `/Data/To/Unit/{ID}` topic to receive data and instructions.
+   - It maintains a persistent session and uses QoS 1 to ensure data delivery.
 
-2. **Recepção de Dados**:
-   - Ao receber uma mensagem no tópico `/Data/To/Unit/{ID}`, a unidade processa a mensagem e retransmite os dados para o sistema externo via `RelayData()`.
+2. **Receiving Data**:
+   - Upon receiving a message on `/Data/To/Unit/{ID}`, the unit processes the message and retransmits the data to the external system via `RelayData()`.
 
-3. **Envio de Dados ao Coordenador**:
-   - Após processar os dados, a unidade envia os resultados de volta ao coordenador publicando no tópico `/Data/From/Unit/{ID}`.
+3. **Sending Data to the Coordinator**:
+   - After processing the data, the unit sends the results back to the coordinator by publishing to the `/Data/From/Unit/{ID}` topic.
 
-4. **Manutenção da Conexão**:
-   - A unidade verifica continuamente a conexão com o broker MQTT e se reconecta automaticamente em caso de desconexão.
-   - Utiliza QoS 1 para garantir que as mensagens sejam entregues pelo menos uma vez, garantindo a confiabilidade do sistema.
+4. **Maintaining Connection**:
+   - The unit continuously checks the connection to the MQTT broker and reconnects automatically if disconnected.
+   - It uses QoS 1 to ensure messages are delivered at least once, ensuring system reliability.
 
-### Aos Colaboradores
+---
 
-1. **Instale o `BlackBox`:**
+### For Collaborators
+
+1. **Install `BlackBox`:**
    - **macOS**:
      ```bash
      brew install blackbox
@@ -95,29 +97,29 @@ As unidades de comunicação são dispositivos ESP32 que se conectam ao coordena
      sudo apt-get install blackbox
      ```
    - **Windows**:
-     - No Windows, você pode usar o `WSL` (Windows Subsystem for Linux) para instalar o `BlackBox` da mesma forma que no Linux, ou configurar um ambiente de terminal Unix com ferramentas como Git Bash e seguir os passos de instalação para Linux.
+     - On Windows, you can use `WSL` (Windows Subsystem for Linux) to install `BlackBox` the same way as on Linux, or set up a Unix-like terminal environment using tools like Git Bash and follow the Linux installation steps.
 
-2. **Obtenha a Chave GPG Codificada:**
-   - A chave GPG codificada em base64 está armazenada nas "Secrets" do repositório.
-   - Peça ao responsável pelo projeto para compartilhar o valor da chave com você, se você ainda não tiver acesso.
+2. **Retrieve the Encrypted GPG Key:**
+   - The GPG key is stored as a secret in the repository via AWS Secrets Manager.
+   - Request access from the project maintainer to retrieve the GPG key, or follow the internal project guidelines to access it.
 
-3. **Importe a Chave GPG na Sua Máquina:**
-   - Depois de obter o valor da chave, importe-a usando o seguinte comando:
+3. **Import the GPG Key on Your Machine:**
+   - Once you have obtained the GPG key, import it using the following command:
      ```bash
      echo "base64_encoded_key" | base64 --decode | gpg --import
      ```
-   - Substitua `"base64_encoded_key"` pela chave base64 que você recebeu.
+   - Replace `"base64_encoded_key"` with the actual base64-encoded GPG key value provided to you.
 
-4. **Verifique a Importação:**
-   - Você pode verificar se a chave foi importada corretamente usando o comando:
+4. **Verify the Key Import:**
+   - After importing, verify that the key was successfully added by running:
      ```bash
      gpg --list-keys
      ```
-   - A chave deve aparecer na lista de chaves disponíveis.
+   - You should see the imported GPG key in the list of available keys.
 
-5. **Desencripte os Arquivos com `BlackBox`:**
-   - Com a chave GPG importada, use o seguinte comando para desencriptar os arquivos:
+5. **Decrypt Files Using `BlackBox`:**
+   - With the GPG key imported, run the following command to decrypt all files in the repository:
      ```bash
      blackbox_decrypt_all_files
      ```
-   - Isso desencriptará todos os arquivos protegidos no repositório, permitindo que você trabalhe com eles.
+   - This will decrypt all protected files, making them accessible for your work.
