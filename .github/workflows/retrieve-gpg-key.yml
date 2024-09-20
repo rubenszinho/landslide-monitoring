@@ -17,7 +17,7 @@ jobs:
         id: check_secret
         run: |
           set +e
-          aws secretsmanager describe-secret --secret-id landslide-monitoring-gpg-key
+          aws secretsmanager describe-secret --secret-id landslide-monitoring-gpg-key --region ${{ secrets.AWS_REGION }}
           if [ $? -eq 0 ]; then
             echo "secret_exists=true" >> $GITHUB_ENV
           else
@@ -27,13 +27,16 @@ jobs:
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+
       - name: Create GPG Key in AWS Secrets Manager (if not exists)
         if: env.secret_exists == 'false'
         run: |
           aws secretsmanager create-secret \
             --name landslide-monitoring-gpg-key \
             --secret-string "${{ secrets.GPG_PRIVATE_KEY }}" \
+            --region ${{ secrets.AWS_REGION }}
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
