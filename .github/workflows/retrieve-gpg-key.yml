@@ -1,0 +1,39 @@
+name: Store GPG Key in AWS Secrets Manager
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  store-gpg-key:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Install AWS CLI
+        run: sudo apt-get install -y awscli
+
+      - name: Check if GPG Key exists in AWS Secrets Manager
+        id: check_secret
+        run: |
+          set +e
+          aws secretsmanager describe-secret --secret-id landslide-monitoring-gpg-key
+          if [ $? -eq 0 ]; then
+            echo "secret_exists=true" >> $GITHUB_ENV
+          else
+            echo "secret_exists=false" >> $GITHUB_ENV
+          fi
+          set -e
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          
+      - name: Create GPG Key in AWS Secrets Manager (if not exists)
+        if: env.secret_exists == 'false'
+        run: |
+          aws secretsmanager create-secret \
+            --name landslide-monitoring-gpg-key \
+            --secret-string "${{ secrets.GPG_PRIVATE_KEY }}" \
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
