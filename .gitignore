@@ -1,5 +1,6 @@
+# Blackbox files
 /.blackbox/pubring.gpg~
 /.blackbox/pubring.kbx~
 /.blackbox/secring.gpg
-/Coordinator/config.env
-/Communication Unit/src/config.h
+/coordinator/config.env
+/communication-unit/src/config.h
