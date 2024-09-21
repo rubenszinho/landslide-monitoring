@@ -1,0 +1,3 @@
+[submodule "soil-monitor-usb-driver"]
+	path = soil-monitor-usb-driver
+	url = https://github.com/rubenszinho/landslide-monitoring-usb-driver.git
