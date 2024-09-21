@@ -96,20 +96,20 @@ The communication units are ESP32 devices that connect to the coordinator via MQ
      ```
    - This ensures that all submodules are correctly fetched and set up in your local repository.
 
-### Blackbox
+## Setting up Blackbox for File Encryption
+
+To securely encrypt sensitive files in this project using **StackExchange Blackbox**, follow these steps:
 
 1. **Install `BlackBox`:**
-   - **macOS**:
-     ```bash
-     brew install blackbox
-     ```
-   - **Linux (Debian/Ubuntu)**:
-     ```bash
-     sudo apt-get install blackbox
-     ```
-   - **Windows**:
-     - On Windows, you can use `WSL` (Windows Subsystem for Linux) to install `BlackBox` the same way as on Linux, or set up a Unix-like terminal environment using tools like Git Bash and follow the Linux installation steps.
+    You can automatically install StackExchange Blackbox via the following commands:
 
+    ```bash
+    git clone https://github.com/StackExchange/blackbox.git
+    cd blackbox
+    sudo make copy-install
+    ```
+    
+This will copy the necessary files into `/usr/local/bin`.
 2. **Obtain the Encoded GPG Key:**
    - The base64-encoded GPG key is stored in the repository's "Secrets."
    - Ask the project maintainer to share the key with you if you do not have access yet.
