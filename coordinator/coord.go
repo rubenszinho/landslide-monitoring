@@ -11,8 +11,8 @@ import (
 )
 
 func init() {
-	// Load environment variables from .env file
 	err := godotenv.Load("config.env")
+	println(os.Getenv("MQTT_SERVER"))
 	if err != nil {
 		log.Fatal("Error loading .env file")
 	}
