@@ -17,10 +17,10 @@ func init() {
 	}
 }
 
-var broker = os.Getenv("MQTT_SERVER")
-var clientId = "coordinator"
-
 func main() {
+	var broker = os.Getenv("MQTT_SERVER")
+	var clientId = "coordinator"
+
 	opts := mqtt.NewClientOptions().AddBroker(broker).SetClientID(clientId)
 	opts.SetCleanSession(false) // Guarantee persistence
 	opts.SetDefaultPublishHandler(messageHandler)
