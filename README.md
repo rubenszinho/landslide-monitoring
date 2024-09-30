@@ -10,44 +10,48 @@ This project aims to implement a multiprotocol communication system for landslid
 
 ### Overview
 
-The coordinator is responsible for managing communication between the various field units (ESP32) and processing the received data. It receives control instructions, sends "wake-up" signals to the units as needed, and forwards processed data to the external system.
+The coordinator is responsible for managing sensors directly connected to it (e.g., via GPIO pins on a Raspberry Pi). It collects data from the sensors, processes it, and publishes the data to MQTT topics. The coordinator also manages system control, such as waking up communication units, sending restart and shutdown signals, and monitoring its own health status.
 
 ### MQTT Topics
 
-- **`/Control/Event/#`**: 
-  - **Description**: The coordinator subscribes to this topic to monitor control events that may require specific actions, such as instructions to wake up units or change the system state.
-  - **Rationale**: This topic allows the coordinator to respond to global events that can affect the operation of the entire system.
+- **`/data/coordinator/sensor/{SensorType}/{SensorID}/{MeasurementType}`**:  
+  - **Description**: The coordinator publishes sensor data to this topic. `{SensorType}` specifies the type of sensor (e.g., `soil`, `pluviometer`), `{SensorID}` uniquely identifies the sensor, and `{MeasurementType}` specifies the type of measurement (e.g., `temperature`, `humidity`).  
+  - **Rationale**: Organizes sensor data based on its type, ID, and measurement, allowing external systems (e.g., communication units) to subscribe to the relevant data streams.
 
-- **`/Data/Coordinator/#`**:
-  - **Description**: Topic used by the coordinator to receive data or specific instructions from units or other control systems.
-  - **Rationale**: Centralizes the receipt of data and instructions for the coordinator, facilitating the processing and dissemination of information to the units.
+- **`/data/coordinator/health/{Metric}/{SubMetric}`**:  
+  - **Description**: The coordinator publishes its own health status, including CPU, memory, and other operational metrics.  
+  - **Rationale**: Allows external systems to monitor the coordinator's hardware health, ensuring proper operation and proactive maintenance.
 
-- **`/Control/WakeUp/#`**:
-  - **Description**: Topic used to send "wake-up" instructions to units that are in low-power mode.
-  - **Rationale**: Ensures that the units can be activated as needed to process events or collect data, maintaining energy efficiency.
+- **`/control/wakeup/communication_unit/{CommUnitID}`**:  
+  - **Description**: Topic used by the coordinator to send "wake-up" instructions to communication units.  
+  - **Rationale**: Ensures that communication units can be activated from low-power mode when data needs to be transmitted or operations resumed.
 
-- **`/Data/From/#`**:
-  - **Description**: The coordinator subscribes to this topic to receive data sent by the field units.
-  - **Rationale**: Allows the coordinator to aggregate and process data received from the units, forwarding it as needed.
+- **`/control/restart/coordinator/{RestartType}`**:  
+  - **Description**: Topic for issuing system restart commands to the coordinator. `{RestartType}` specifies the type of restart (e.g., `soft`, `full`).  
+  - **Rationale**: Allows the coordinator to recover from potential deadlocks or software issues by performing a remote restart.
 
-- **`/Data/To/Unit/{ID}`**:
-  - **Description**: Topic used to send specific data to a unit identified by its ID.
-  - **Rationale**: Facilitates sending data or instructions targeted at specific units, enabling granular control of operations.
+- **`/control/restart/communication_unit/{CommUnitID}/{RestartType}`**:  
+  - **Description**: Topic for issuing restart commands to communication units. `{RestartType}` specifies the type of restart (e.g., `soft`, `full`).  
+  - **Rationale**: Enables the system to remotely restart individual communication units for maintenance or error recovery.
+
+- **`/control/shutdown/coordinator/{ShutdownType}`**:  
+  - **Description**: Topic used to issue shutdown commands to the coordinator. `{ShutdownType}` specifies whether the shutdown should be `graceful` or `immediate`.  
+  - **Rationale**: Facilitates controlled power management of the coordinator during periods of inactivity or maintenance.
+
+- **`/control/shutdown/communication_unit/{CommUnitID}/{ShutdownType}`**:  
+  - **Description**: Topic used to issue shutdown commands to communication units. `{ShutdownType}` specifies whether the shutdown should be `graceful` or `immediate`.  
+  - **Rationale**: Facilitates controlled power management of communication units during periods of inactivity or maintenance.
 
 ### Coordinator Operation
 
-1. **Event Monitoring**:
-   - The coordinator subscribes to `/Control/Event/#` to monitor control events.
-   - Upon receiving an event, it publishes corresponding instructions on `/Data/Coordinator/`.
+1. **Data Publishing**:  
+   The coordinator collects sensor data from connected devices (e.g., soil sensors, pluviometers) and publishes this data on `/data/coordinator/sensor/{SensorType}/{SensorID}/{MeasurementType}`. The communication units or other clients subscribe to these topics to receive the sensor data.
 
-2. **Data Reception and Processing**:
-   - The coordinator receives data on `/Data/Coordinator/#`.
-   - It checks if the units are awake; if necessary, it sends "wake-up" instructions on `/Control/WakeUp/#`.
-   - Forwards the data to the appropriate units on `/Data/To/Unit/{ID}`.
+2. **Health Monitoring**:  
+   The coordinator publishes its hardware health metrics to `/data/coordinator/health/{Metric}/{SubMetric}` for external monitoring. Metrics may include CPU usage, memory availability, and battery life (if applicable).
 
-3. **Unit Wake-Up**:
-   - The coordinator monitors `/Control/WakeUp/#` to send activation signals to the units.
-   - Upon waking up, the units can send data back via `/Data/From/#`.
+3. **Control Operations**:  
+   The coordinator sends wake-up signals to communication units on `/control/wakeup/communication_unit/{CommUnitID}` and manages system-wide restarts and shutdowns through the `/control/restart/#` and `/control/shutdown/#` topics. The coordinator itself can also be restarted or shut down when necessary.
 
 ---
 
@@ -55,37 +59,44 @@ The coordinator is responsible for managing communication between the various fi
 
 ### Overview
 
-The communication units are ESP32 devices that connect to the coordinator via MQTT to receive instructions, collect data, and transmit it to the coordinator or external systems. They are capable of entering low-power states and waking up on demand, according to the coordinator's instructions.
+The communication units (ESP32) are responsible for subscribing to sensor data published by the coordinator. Once the data is received, the communication unit shares this information with external systems. The communication unit also manages protocol-specific operations, such as handling communication over WiFi, LoRa, or 4G, and reports its own health status.
 
 ### MQTT Topics
 
-- **`/Data/To/Unit/{ID}`**:
-  - **Description**: Topic where the unit subscribes to receive specific data or instructions from the coordinator.
-  - **Rationale**: Allows the unit to receive data or commands directly from the coordinator, facilitating the execution of specific tasks.
+- **`/data/communication_unit/{CommUnitID}/protocol/{Protocol}/{InterfaceID}/{RequestOrResponse}/{StatusType}`**:  
+  - **Description**: Topic where the communication unit publishes protocol-specific statuses and responses (e.g., WiFi, LoRa, 4G). `{RequestOrResponse}` indicates the type of message, and `{StatusType}` provides additional information on the message's success, failure, or error status.  
+  - **Rationale**: Separates protocol operations for easier debugging and monitoring of network-level events.
 
-- **`/Data/From/Unit/{ID}`**:
-  - **Description**: Topic where the unit publishes processed data to be sent back to the coordinator.
-  - **Rationale**: Facilitates the sending of data collected or processed by the unit, ensuring that the coordinator can receive and process this information.
+- **`/data/communication_unit/{CommUnitID}/protocol/{Protocol}/{InterfaceID}/message/{MessageType}/{ContentType}`**:  
+  - **Description**: The communication unit publishes the actual content of protocol messages here. `{MessageType}` identifies the content type (e.g., `data`, `command`), and `{ContentType}` indicates the format (e.g., `json`, `xml`).  
+  - **Rationale**: Isolates protocol message content for better data handling and potential future auditing or logging.
+
+- **`/data/communication_unit/{CommUnitID}/health/{Metric}/{SubMetric}`**:  
+  - **Description**: The communication unit publishes its own health metrics, such as CPU usage, memory status, or battery life.  
+  - **Rationale**: Allows the coordinator to monitor the operational status of communication units, ensuring they function correctly.
+
+- **`/data/coordinator/sensor/{SensorType}/{SensorID}/{MeasurementType}`**:  
+  - **Description**: Communication units subscribe to this topic to receive sensor data published by the coordinator.  
+  - **Rationale**: The communication unit processes this data and sends it to external systems as needed.
 
 ### Communication Unit Operation
 
-1. **Connection and Subscription**:
-   - The unit connects to the MQTT broker and subscribes to the topic `/Data/To/Unit/{ID}` to receive data and instructions.
-   - It maintains a persistent session and uses QoS 1 to ensure data delivery.
+1. **Data Reception**:  
+   The communication unit subscribes to sensor data topics like `/data/coordinator/sensor/{SensorType}/{SensorID}/{MeasurementType}` to receive data from the coordinator's sensors. This data is then shared externally via the unit’s protocol-specific interfaces.
 
-2. **Data Reception**:
-   - Upon receiving a message on the topic `/Data/To/Unit/{ID}`, the unit processes the message and retransmits the data to the external system via `RelayData()`.
+2. **Protocol Handling**:  
+   The communication unit manages protocol-specific operations and publishes the results (e.g., request status, response content) to `/data/communication_unit/{CommUnitID}/protocol/{Protocol}/{InterfaceID}/{RequestOrResponse}/{StatusType}` and `/data/communication_unit/{CommUnitID}/protocol/{Protocol}/{InterfaceID}/message/{MessageType}/{ContentType}`.
 
-3. **Sending Data to the Coordinator**:
-   - After processing the data, the unit sends the results back to the coordinator by publishing to the topic `/Data/From/Unit/{ID}`.
+3. **Health Reporting**:  
+   The communication unit continuously publishes its health metrics to `/data/communication_unit/{CommUnitID}/health/#` for the coordinator to monitor.
 
-4. **Connection Maintenance**:
-   - The unit continuously checks the connection to the MQTT broker and automatically reconnects in case of disconnection.
-   - It uses QoS 1 to ensure that messages are delivered at least once, ensuring system reliability.
+4. **Wake-Up, Restart, and Shutdown Control**:  
+   The communication unit listens to wake-up commands on `/control/wakeup/communication_unit/{CommUnitID}`, restart commands on `/control/restart/communication_unit/{CommUnitID}/{RestartType}`, and shutdown commands on `/control/shutdown/communication_unit/{CommUnitID}/{ShutdownType}`. It responds to control signals as needed to conserve energy and maintain operational efficiency.
+
+5. **Connection Maintenance**:  
+   The communication unit uses persistent MQTT sessions and QoS 1 to ensure message delivery, automatically reconnecting to the broker if the connection is lost.
 
 ---
-
-## For Collaborators
 
 ### Submodules
 
