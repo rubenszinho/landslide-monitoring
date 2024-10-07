@@ -2,5 +2,5 @@
 /.blackbox/pubring.gpg~
 /.blackbox/pubring.kbx~
 /.blackbox/secring.gpg
-/coordinator/config.env
+/coordinator/config/config.env
 /communication-unit/src/config.h
