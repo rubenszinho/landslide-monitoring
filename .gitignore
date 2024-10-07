@@ -3,4 +3,3 @@
 /.blackbox/pubring.kbx~
 /.blackbox/secring.gpg
 /coordinator/config/config.env
-/communication-unit/src/config.h

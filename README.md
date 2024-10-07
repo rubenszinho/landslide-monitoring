@@ -55,49 +55,6 @@ The coordinator is responsible for managing sensors directly connected to it (e.
 
 ---
 
-## Communication Unit (ESP32)
-
-### Overview
-
-The communication units (ESP32) are responsible for subscribing to sensor data published by the coordinator. Once the data is received, the communication unit shares this information with external systems. The communication unit also manages protocol-specific operations, such as handling communication over WiFi, LoRa, or 4G, and reports its own health status.
-
-### MQTT Topics
-
-- **`/data/communication_unit/{CommUnitID}/protocol/{Protocol}/{InterfaceID}/{RequestOrResponse}/status`**:  
-  - **Description**: Topic where the communication unit publishes protocol-specific statuses and responses (e.g., WiFi, LoRa, 4G). `{RequestOrResponse}` indicates the type of message, and status provides additional information on the message's success, failure, or error status.  
-  - **Rationale**: Separates protocol operations for easier debugging and monitoring of network-level events.
-
-- **`/data/communication_unit/{CommUnitID}/protocol/{Protocol}/{InterfaceID}/message`**:  
-  - **Description**: The communication unit publishes the actual content of protocol messages here.  
-  - **Rationale**: Isolates protocol message content for better data handling and potential future auditing or logging.
-
-- **`/data/communication_unit/{CommUnitID}/health/{Metric}`**:  
-  - **Description**: The communication unit publishes its own health metrics, such as CPU usage, memory status, or battery life.  
-  - **Rationale**: Allows the coordinator to monitor the operational status of communication units, ensuring they function correctly.
-
-- **`/data/coordinator/sensor/{SensorType}/{SensorID}/{MeasurementType}`**:  
-  - **Description**: Communication units subscribe to this topic to receive sensor data published by the coordinator.  
-  - **Rationale**: The communication unit processes this data and sends it to external systems as needed.
-
-### Communication Unit Operation
-
-1. **Data Reception**:  
-   The communication unit subscribes to sensor data topics like `/data/coordinator/sensor/{SensorType}/{SensorID}/{MeasurementType}` to receive data from the coordinator's sensors. This data is then shared externally via the unit’s protocol-specific interfaces.
-
-2. **Protocol Handling**:  
-   The communication unit manages protocol-specific operations and publishes the results (e.g., request status, response content) to `/data/communication_unit/{CommUnitID}/protocol/{Protocol}/{InterfaceID}/{RequestOrResponse}/status` and `/data/communication_unit/{CommUnitID}/protocol/{Protocol}/{InterfaceID}/message`.
-
-3. **Health Reporting**:  
-   The communication unit continuously publishes its health metrics to `/data/communication_unit/{CommUnitID}/health/#` for the coordinator to monitor.
-
-4. **Wake-Up, Restart, and Shutdown Control**:  
-   The communication unit listens to wake-up commands on `/control/wakeup/communication_unit/{CommUnitID}`, restart commands on `/control/restart/communication_unit/{CommUnitID}/{RestartType}`, and shutdown commands on `/control/shutdown/communication_unit/{CommUnitID}/{ShutdownType}`. It responds to control signals as needed to conserve energy and maintain operational efficiency.
-
-5. **Connection Maintenance**:  
-   The communication unit uses persistent MQTT sessions and QoS 1 to ensure message delivery, automatically reconnecting to the broker if the connection is lost.
-
----
-
 ### Submodules
 
 **Updating Submodules After Cloning**:

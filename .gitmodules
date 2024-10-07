@@ -1,3 +1,6 @@
 [submodule "soil-monitor-usb-driver"]
 	path = soil-monitor-usb-driver
 	url = https://github.com/rubenszinho/landslide-monitoring-usb-driver.git
+[submodule "communication-unit"]
+	path = communication-unit
+	url = https://github.com/rubenszinho/landslide-communication-unit.git
