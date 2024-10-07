@@ -18,7 +18,7 @@ The coordinator is responsible for managing sensors directly connected to it (e.
   - **Description**: The coordinator publishes sensor data to this topic. `{SensorType}` specifies the type of sensor (e.g., `soil`, `pluviometer`), `{SensorID}` uniquely identifies the sensor, and `{MeasurementType}` specifies the type of measurement (e.g., `temperature`, `humidity`).  
   - **Rationale**: Organizes sensor data based on its type, ID, and measurement, allowing external systems (e.g., communication units) to subscribe to the relevant data streams.
 
-- **`/data/coordinator/health/{Metric}/{SubMetric}`**:  
+- **`/data/coordinator/health/{Metric}`**:  
   - **Description**: The coordinator publishes its own health status, including CPU, memory, and other operational metrics.  
   - **Rationale**: Allows external systems to monitor the coordinator's hardware health, ensuring proper operation and proactive maintenance.
 
@@ -48,7 +48,7 @@ The coordinator is responsible for managing sensors directly connected to it (e.
    The coordinator collects sensor data from connected devices (e.g., soil sensors, pluviometers) and publishes this data on `/data/coordinator/sensor/{SensorType}/{SensorID}/{MeasurementType}`. The communication units or other clients subscribe to these topics to receive the sensor data.
 
 2. **Health Monitoring**:  
-   The coordinator publishes its hardware health metrics to `/data/coordinator/health/{Metric}/{SubMetric}` for external monitoring. Metrics may include CPU usage, memory availability, and battery life (if applicable).
+   The coordinator publishes its hardware health metrics to `/data/coordinator/health/{Metric}` for external monitoring. Metrics may include CPU usage, memory availability, and battery life (if applicable).
 
 3. **Control Operations**:  
    The coordinator sends wake-up signals to communication units on `/control/wakeup/communication_unit/{CommUnitID}` and manages system-wide restarts and shutdowns through the `/control/restart/#` and `/control/shutdown/#` topics. The coordinator itself can also be restarted or shut down when necessary.
@@ -63,15 +63,15 @@ The communication units (ESP32) are responsible for subscribing to sensor data p
 
 ### MQTT Topics
 
-- **`/data/communication_unit/{CommUnitID}/protocol/{Protocol}/{InterfaceID}/{RequestOrResponse}/{StatusType}`**:  
-  - **Description**: Topic where the communication unit publishes protocol-specific statuses and responses (e.g., WiFi, LoRa, 4G). `{RequestOrResponse}` indicates the type of message, and `{StatusType}` provides additional information on the message's success, failure, or error status.  
+- **`/data/communication_unit/{CommUnitID}/protocol/{Protocol}/{InterfaceID}/{RequestOrResponse}/status`**:  
+  - **Description**: Topic where the communication unit publishes protocol-specific statuses and responses (e.g., WiFi, LoRa, 4G). `{RequestOrResponse}` indicates the type of message, and status provides additional information on the message's success, failure, or error status.  
   - **Rationale**: Separates protocol operations for easier debugging and monitoring of network-level events.
 
-- **`/data/communication_unit/{CommUnitID}/protocol/{Protocol}/{InterfaceID}/message/{MessageType}/{ContentType}`**:  
-  - **Description**: The communication unit publishes the actual content of protocol messages here. `{MessageType}` identifies the content type (e.g., `data`, `command`), and `{ContentType}` indicates the format (e.g., `json`, `xml`).  
+- **`/data/communication_unit/{CommUnitID}/protocol/{Protocol}/{InterfaceID}/message`**:  
+  - **Description**: The communication unit publishes the actual content of protocol messages here.  
   - **Rationale**: Isolates protocol message content for better data handling and potential future auditing or logging.
 
-- **`/data/communication_unit/{CommUnitID}/health/{Metric}/{SubMetric}`**:  
+- **`/data/communication_unit/{CommUnitID}/health/{Metric}`**:  
   - **Description**: The communication unit publishes its own health metrics, such as CPU usage, memory status, or battery life.  
   - **Rationale**: Allows the coordinator to monitor the operational status of communication units, ensuring they function correctly.
 
@@ -85,7 +85,7 @@ The communication units (ESP32) are responsible for subscribing to sensor data p
    The communication unit subscribes to sensor data topics like `/data/coordinator/sensor/{SensorType}/{SensorID}/{MeasurementType}` to receive data from the coordinator's sensors. This data is then shared externally via the unit’s protocol-specific interfaces.
 
 2. **Protocol Handling**:  
-   The communication unit manages protocol-specific operations and publishes the results (e.g., request status, response content) to `/data/communication_unit/{CommUnitID}/protocol/{Protocol}/{InterfaceID}/{RequestOrResponse}/{StatusType}` and `/data/communication_unit/{CommUnitID}/protocol/{Protocol}/{InterfaceID}/message/{MessageType}/{ContentType}`.
+   The communication unit manages protocol-specific operations and publishes the results (e.g., request status, response content) to `/data/communication_unit/{CommUnitID}/protocol/{Protocol}/{InterfaceID}/{RequestOrResponse}/status` and `/data/communication_unit/{CommUnitID}/protocol/{Protocol}/{InterfaceID}/message`.
 
 3. **Health Reporting**:  
    The communication unit continuously publishes its health metrics to `/data/communication_unit/{CommUnitID}/health/#` for the coordinator to monitor.
