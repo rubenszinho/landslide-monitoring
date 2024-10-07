@@ -64,6 +64,11 @@ The coordinator is responsible for managing sensors directly connected to it (e.
      ```
    - This ensures that all submodules are correctly fetched and set up in your local repository.
 
+   - To keep your submodules up-to-date with their branches during your workflow, you could:
+     ```bash
+     git submodule update --remote
+     ```
+
 ### Setting up Blackbox for File Encryption
 
 To securely encrypt sensitive files in this project using **StackExchange Blackbox**, follow these steps:
