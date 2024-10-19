@@ -22,7 +22,7 @@ WORKDIR /app
 
 COPY --from=builder /app/coordinator /usr/local/bin/coordinator
 
-COPY config/config.env /app/config.env
+COPY config/config.env /app/config/config.env
 
 EXPOSE 1883
 
