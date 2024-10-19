@@ -15,7 +15,7 @@ func PublishSensorData(mqttClient mqtt.Client) {
 		sensorID := "1"
 		measurementType := Salinity
 
-		value, err := sensors.ReadSensor(sensorType, sensorID, measurementType)
+		value, err := sensors.ReadSensor(sensorType.String(), sensorID, measurementType.String())
 		if err != nil {
 			time.Sleep(10 * time.Second)
 			continue
